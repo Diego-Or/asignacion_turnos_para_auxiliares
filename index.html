@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignación de Pacientes - Hospital</title>
+    <style>
+        /* ===== RESET Y VARIABLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #1e3a8a;
+            --secondary-blue: #3b82f6;
+            --light-blue: #eff6ff;
+            --primary-green: #059669;
+            --light-green: #d1fae5;
+            --dark: #1f2937;
+            --gray: #6b7280;
+            --light-gray: #f3f4f6;
+            --white: #ffffff;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+        }
+
+        /* ===== ESTILOS GENERALES ===== */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--light-green) 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 16px;
+            line-height: 1.6;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: var(--white);
+            padding: 24px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary-green);
+            border-radius: 2px;
+        }
+
+        /* ===== FORMULARIOS ===== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            transition: all 0.3s;
+            background: var(--white);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* ===== BOTONES ===== */
+        .btn {
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-blue);
+        }
+
+        .btn-success {
+            background: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            color: var(--white);
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        /* ===== LISTAS ===== */
+        .list {
+            list-style: none;
+        }
+
+        .list-item {
+            background: var(--light-gray);
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .list-item:hover {
+            background: #e5e7eb;
+        }
+
+        .list-item-name {
+            font-weight: 600;
+            color: var(--dark);
+            flex-grow: 1;
+            font-size: 15px;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ===== ASIGNACIONES ===== */
+        .assignment-card {
+            background: var(--white);
+            border: 2px solid var(--light-blue);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .assignment-header {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .assignment-auxiliary {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .assignment-count {
+            background: var(--white);
+            color: var(--primary-blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .assignment-patients {
+            list-style: none;
+        }
+
+        .assignment-patient {
+            background: var(--light-green);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            color: var(--dark);
+            font-size: 14px;
+            border-left: 4px solid var(--primary-green);
+        }
+
+        /* ===== ESTADOS VACÍOS ===== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        /* ===== ALERTAS ===== */
+        .alert {
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            border-left: 4px solid var(--secondary-blue);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning);
+        }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .badge-primary {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .badge-success {
+            background: var(--light-green);
+            color: var(--primary-green);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 768px) {
+            body {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .btn {
+                width: auto;
+            }
+        }
+
+        /* ===== ANIMACIONES ===== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* ===== UTILIDADES ===== */
+        .hidden {
+            display: none;
+        }
+
+        .mt-1 {
+            margin-top: 8px;
+        }
+
+        .mb-2 {
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <h1>🏥 Asignación de Pacientes</h1>
+            <p>Sistema de distribución equitativa para el turno diario</p>
+        </header>
+
+        <!-- FORMULARIO DE PACIENTES -->
+        <div class="card">
+            <h2 class="card-title">Gestión de Pacientes</h2>
+            <form id="patientForm">
+                <div class="form-group">
+                    <label for="patientName" class="form-label">Nombre del Paciente</label>
+                    <input 
+                        type="text" 
+                        id="patientName" 
+                        class="form-input" 
+                        placeholder="Ej: Juan Pérez"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    ➕ Agregar Paciente
+                </button>
+            </form>
+
+            <div class="mt-1">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
+                        Lista de Pacientes 
+                        <span class="badge badge-primary" id="patientCount">0</span>
+                    </h3>
+                </div>
+                <ul id="patientList" class="list"></ul>
+            </div>
+        </div>
+
+        <!-- FORMULARIO DE AUXILIARES -->
+        <div class="card">
+            <h2 class="card-title">Gestión de Auxiliares</h2>
+            <form id="auxiliaryForm">
+                <div class="form-group">
+                    <label for="auxiliaryName" class="form-label">Nombre del Auxiliar</label>
+                    <input 
+                        type="text" 
+                        id="auxiliaryName" 
+                        class="form-input" 
+                        placeholder="Ej: María González"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    ➕ Agregar Auxiliar
+                </button>
+            </form>
+
+            <div class="mt-1">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
+                        Auxiliares del Turno 
+                        <span class="badge badge-success" id="auxiliaryCount">0</span>
+                    </h3>
+                </div>
+                <ul id="auxiliaryList" class="list"></ul>
+            </div>
+        </div>
+
+        <!-- BOTÓN DE ASIGNACIÓN -->
+        <div class="card">
+            <button id="assignBtn" class="btn btn-success" style="font-size: 18px;">
+                🔄 Asignar Pacientes Equitativamente
+            </button>
+            <div id="assignmentInfo" class="alert alert-info mt-1 hidden">
+                Se distribuirán los pacientes de forma equitativa entre los auxiliares disponibles.
+            </div>
+        </div>
+
+        <!-- RESULTADO DE ASIGNACIONES -->
+        <div id="assignmentsSection" class="card hidden">
+            <h2 class="card-title">📋 Asignaciones del Turno</h2>
+            <div id="assignmentsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===== ESTADO DE LA APLICACIÓN =====
+        let patients = [];
+        let auxiliaries = [];
+        let assignments = {};
+        let editingPatient = null;
+        let editingAuxiliary = null;
+
+        // ===== ELEMENTOS DEL DOM =====
+        const patientForm = document.getElementById('patientForm');
+        const patientNameInput = document.getElementById('patientName');
+        const patientList = document.getElementById('patientList');
+        const patientCount = document.getElementById('patientCount');
+
+        const auxiliaryForm = document.getElementById('auxiliaryForm');
+        const auxiliaryNameInput = document.getElementById('auxiliaryName');
+        const auxiliaryList = document.getElementById('auxiliaryList');
+        const auxiliaryCount = document.getElementById('auxiliaryCount');
+
+        const assignBtn = document.getElementById('assignBtn');
+        const assignmentInfo = document.getElementById('assignmentInfo');
+        const assignmentsSection = document.getElementById('assignmentsSection');
+        const assignmentsList = document.getElementById('assignmentsList');
+
+        // ===== INICIALIZACIÓN =====
+        function init() {
+            loadFromStorage();
+            renderPatients();
+            renderAuxiliaries();
+            updateAssignButton();
+        }
+
+        // ===== ALMACENAMIENTO LOCAL =====
+        function saveToStorage() {
+            const data = {
+                patients,
+                auxiliaries,
+                assignments
+            };
+            localStorage.setItem('hospitalAssignments', JSON.stringify(data));
+        }
+
+        function loadFromStorage() {
+            const stored = localStorage.getItem('hospitalAssignments');
+            if (stored) {
+                const data = JSON.parse(stored);
+                patients = data.patients || [];
+                auxiliaries = data.auxiliaries || [];
+                assignments = data.assignments || {};
+            }
+        }
+
+        // ===== GESTIÓN DE PACIENTES =====
+        patientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = patientNameInput.value.trim();
+
+            if (!name) {
+                alert('⚠️ Por favor ingrese un nombre válido');
+                return;
+            }
+
+            if (editingPatient !== null) {
+                // Modo edición
+                const oldName = patients[editingPatient];
+                if (isDuplicatePatient(name) && name !== oldName) {
+                    alert('⚠️ Este paciente ya existe en la lista');
+                    return;
+                }
+                patients[editingPatient] = name;
+                editingPatient = null;
+                patientForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Paciente';
+            } else {
+                // Modo agregar
+                if (isDuplicatePatient(name)) {
+                    alert('⚠️ Este paciente ya existe en la lista');
+                    return;
+                }
+                patients.push(name);
+            }
+
+            patientNameInput.value = '';
+            saveToStorage();
+            renderPatients();
+            updateAssignButton();
+            
+            // Limpiar asignaciones previas
+            if (Object.keys(assignments).length > 0) {
+                assignmentsSection.classList.add('hidden');
+                assignments = {};
+            }
+        });
+
+        function isDuplicatePatient(name) {
+            return patients.some(p => p.toLowerCase() === name.toLowerCase());
+        }
+
+        function editPatient(index) {
+            editingPatient = index;
+            patientNameInput.value = patients[index];
+            patientNameInput.focus();
+            patientForm.querySelector('button[type="submit"]').textContent = '✏️ Actualizar Paciente';
+        }
+
+        function deletePatient(index) {
+            if (confirm(`¿Está seguro de eliminar al paciente "${patients[index]}"?`)) {
+                patients.splice(index, 1);
+                saveToStorage();
+                renderPatients();
+                updateAssignButton();
+                
+                // Limpiar asignaciones previas
+                if (Object.keys(assignments).length > 0) {
+                    assignmentsSection.classList.add('hidden');
+                    assignments = {};
+                }
+            }
+        }
+
+        function renderPatients() {
+            patientCount.textContent = patients.length;
+
+            if (patients.length === 0) {
+                patientList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏥</div>
+                        <div class="empty-state-text">No hay pacientes registrados</div>
+                    </div>
+                `;
+                return;
+            }
+
+            patientList.innerHTML = patients.map((patient, index) => `
+                <li class="list-item fade-in">
+                    <span class="list-item-name">${patient}</span>
+                    <div class="list-item-actions">
+                        <button class="btn btn-edit" onclick="editPatient(${index})">✏️</button>
+                        <button class="btn btn-danger" onclick="deletePatient(${index})">🗑️</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // ===== GESTIÓN DE AUXILIARES =====
+        auxiliaryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = auxiliaryNameInput.value.trim();
+
+            if (!name) {
+                alert('⚠️ Por favor ingrese un nombre válido');
+                return;
+            }
+
+            if (editingAuxiliary !== null) {
+                // Modo edición
+                const oldName = auxiliaries[editingAuxiliary];
+                if (isDuplicateAuxiliary(name) && name !== oldName) {
+                    alert('⚠️ Este auxiliar ya existe en la lista');
+                    return;
+                }
+                auxiliaries[editingAuxiliary] = name;
+                editingAuxiliary = null;
+                auxiliaryForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Auxiliar';
+            } else {
+                // Modo agregar
+                if (isDuplicateAuxiliary(name)) {
+                    alert('⚠️ Este auxiliar ya existe en la lista');
+                    return;
+                }
+                auxiliaries.push(name);
+            }
+
+            auxiliaryNameInput.value = '';
+            saveToStorage();
+            renderAuxiliaries();
+            updateAssignButton();
+            
+            // Limpiar asignaciones previas
+            if (Object.keys(assignments).length > 0) {
+                assignmentsSection.classList.add('hidden');
+                assignments = {};
+            }
+        });
+
+        function isDuplicateAuxiliary(name) {
+            return auxiliaries.some(a => a.toLowerCase() === name.toLowerCase());
+        }
+
+        function editAuxiliary(index) {
+            editingAuxiliary = index;
+            auxiliaryNameInput.value = auxiliaries[index];
+            auxiliaryNameInput.focus();
+            auxiliaryForm.querySelector('button[type="submit"]').textContent = '✏️ Actualizar Auxiliar';
+        }
+
+        function deleteAuxiliary(index) {
+            if (confirm(`¿Está seguro de eliminar al auxiliar "${auxiliaries[index]}"?`)) {
+                auxiliaries.splice(index, 1);
+                saveToStorage();
+                renderAuxiliaries();
+                updateAssignButton();
+                
+                // Limpiar asignaciones previas
+                if (Object.keys(assignments).length > 0) {
+                    assignmentsSection.classList.add('hidden');
+                    assignments = {};
+                }
+            }
+        }
+
+        function renderAuxiliaries() {
+            auxiliaryCount.textContent = auxiliaries.length;
+
+            if (auxiliaries.length === 0) {
+                auxiliaryList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👨‍⚕️</div>
+                        <div class="empty-state-text">No hay auxiliares registrados</div>
+                    </div>
+                `;
+                return;
+            }
+
+            auxiliaryList.innerHTML = auxiliaries.map((auxiliary, index) => `
+                <li class="list-item fade-in">
+                    <span class="list-item-name">${auxiliary}</span>
+                    <div class="list-item-actions">
+                        <button class="btn btn-edit" onclick="editAuxiliary(${index})">✏️</button>
+                        <button class="btn btn-danger" onclick="deleteAuxiliary(${index})">🗑️</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // ===== ASIGNACIÓN DE PACIENTES =====
+        function updateAssignButton() {
+            const canAssign = patients.length > 0 && auxiliaries.length > 0;
+            assignBtn.disabled = !canAssign;
+            assignBtn.style.opacity = canAssign ? '1' : '0.5';
+            assignBtn.style.cursor = canAssign ? 'pointer' : 'not-allowed';
+            
+            if (canAssign) {
+                assignmentInfo.classList.remove('hidden');
+            } else {
+                assignmentInfo.classList.add('hidden');
+            }
+        }
+
+        assignBtn.addEventListener('click', () => {
+            if (patients.length === 0) {
+                alert('⚠️ No hay pacientes para asignar');
+                return;
+            }
+
+            if (auxiliaries.length === 0) {
+                alert('⚠️ No hay auxiliares disponibles');
+                return;
+            }
+
+            assignPatientsEquitably();
+        });
+
+        function assignPatientsEquitably() {
+            // Resetear asignaciones
+            assignments = {};
+            auxiliaries.forEach(aux => {
+                assignments[aux] = [];
+            });
+
+            // Distribuir pacientes de forma equitativa
+            const shuffledPatients = [...patients].sort(() => Math.random() - 0.5);
+            
+            shuffledPatients.forEach((patient, index) => {
+                const auxIndex = index % auxiliaries.length;
+                const auxiliary = auxiliaries[auxIndex];
+                assignments[auxiliary].push(patient);
+            });
+
+            saveToStorage();
+            renderAssignments();
+            
+            // Scroll suave hacia las asignaciones
+            setTimeout(() => {
+                assignmentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function renderAssignments() {
+            assignmentsSection.classList.remove('hidden');
+
+            const totalPatients = patients.length;
+            const totalAuxiliaries = auxiliaries.length;
+            const avgPatients = Math.floor(totalPatients / totalAuxiliaries);
+            const remainder = totalPatients % totalAuxiliaries;
+
+            let html = `
+                <div class="alert alert-info mb-2">
+                    ✅ Se han asignado <strong>${totalPatients} pacientes</strong> entre 
+                    <strong>${totalAuxiliaries} auxiliares</strong>
+                    (${avgPatients}-${avgPatients + 1} pacientes por auxiliar)
+                </div>
+            `;
+
+            auxiliaries.forEach(auxiliary => {
+                const assignedPatients = assignments[auxiliary] || [];
+                html += `
+                    <div class="assignment-card fade-in">
+                        <div class="assignment-header">
+                            <span class="assignment-auxiliary">👨‍⚕️ ${auxiliary}</span>
+                            <span class="assignment-count">${assignedPatients.length}</span>
+                        </div>
+                        ${assignedPatients.length > 0 ? `
+                            <ul class="assignment-patients">
+                                ${assignedPatients.map(patient => `
+                                    <li class="assignment-patient">🏥 ${patient}</li>
+                                `).join('')}
+                            </ul>
+                        ` : `
+                            <div class="empty-state" style="padding: 20px;">
+                                <div class="empty-state-text">Sin pacientes asignados</div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+
+            assignmentsList.innerHTML = html;
+        }
+
+        // ===== INICIAR APLICACIÓN =====
+        init();
+
+        // Renderizar asignaciones si existen al cargar
+        if (Object.keys(assignments).length > 0 && assignments[auxiliaries[0]]?.length > 0) {
+            renderAssignments();
+        }
+    </script>
+</body>
+</html>
