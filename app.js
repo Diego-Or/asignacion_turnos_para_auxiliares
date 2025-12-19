@@ -31,19 +31,16 @@ function init() {
     renderPatients();
     renderAuxiliaries();
     updateAssignButton();
-    
-    // Renderizar asignaciones si existen al cargar
-    if (Object.keys(assignments).length > 0 && auxiliaries.length > 0 && assignments[auxiliaries[0]]?.length > 0) {
-        renderAssignments();
-    }
+    // Las asignaciones NO se renderizan al cargar la página
+    // El usuario debe presionar el botón "Asignar" para verlas
 }
 
 // ===== ALMACENAMIENTO LOCAL =====
+// Solo guardamos pacientes y auxiliares, NO las asignaciones
 function saveToStorage() {
     const data = {
         patients,
-        auxiliaries,
-        assignments
+        auxiliaries
     };
     localStorage.setItem('hospitalAssignments', JSON.stringify(data));
 }
@@ -54,7 +51,8 @@ function loadFromStorage() {
         const data = JSON.parse(stored);
         patients = data.patients || [];
         auxiliaries = data.auxiliaries || [];
-        assignments = data.assignments || {};
+        // Las asignaciones NO se cargan, siempre empiezan vacías
+        assignments = {};
     }
 }
 
@@ -92,11 +90,8 @@ patientForm.addEventListener('submit', (e) => {
     renderPatients();
     updateAssignButton();
     
-    // Limpiar asignaciones previas
-    if (Object.keys(assignments).length > 0) {
-        assignmentsSection.classList.add('hidden');
-        assignments = {};
-    }
+    // Limpiar asignaciones al modificar pacientes
+    clearAssignments();
 });
 
 function isDuplicatePatient(name) {
@@ -117,11 +112,8 @@ function deletePatient(index) {
         renderPatients();
         updateAssignButton();
         
-        // Limpiar asignaciones previas
-        if (Object.keys(assignments).length > 0) {
-            assignmentsSection.classList.add('hidden');
-            assignments = {};
-        }
+        // Limpiar asignaciones al eliminar pacientes
+        clearAssignments();
     }
 }
 
@@ -183,11 +175,8 @@ auxiliaryForm.addEventListener('submit', (e) => {
     renderAuxiliaries();
     updateAssignButton();
     
-    // Limpiar asignaciones previas
-    if (Object.keys(assignments).length > 0) {
-        assignmentsSection.classList.add('hidden');
-        assignments = {};
-    }
+    // Limpiar asignaciones al modificar auxiliares
+    clearAssignments();
 });
 
 function isDuplicateAuxiliary(name) {
@@ -208,11 +197,8 @@ function deleteAuxiliary(index) {
         renderAuxiliaries();
         updateAssignButton();
         
-        // Limpiar asignaciones previas
-        if (Object.keys(assignments).length > 0) {
-            assignmentsSection.classList.add('hidden');
-            assignments = {};
-        }
+        // Limpiar asignaciones al eliminar auxiliares
+        clearAssignments();
     }
 }
 
@@ -284,7 +270,7 @@ function assignPatientsEquitably() {
         assignments[auxiliary].push(patient);
     });
 
-    saveToStorage();
+    // NO guardamos las asignaciones en localStorage
     renderAssignments();
     
     // Scroll suave hacia las asignaciones
@@ -333,3 +319,15 @@ function renderAssignments() {
 
     assignmentsList.innerHTML = html;
 }
+
+// ===== UTILIDADES =====
+// Función para limpiar las asignaciones de la vista
+function clearAssignments() {
+    if (Object.keys(assignments).length > 0) {
+        assignmentsSection.classList.add('hidden');
+        assignments = {};
+    }
+}
+
+// ===== INICIAR APLICACIÓN =====
+init();
