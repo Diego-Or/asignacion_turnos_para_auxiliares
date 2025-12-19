@@ -6,7 +6,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asignación de Pacientes - Hospital</title>
+    <title>Gestión de Turnos y Pacientes en Meintegral</title>
+    <meta name="description" content="Optimiza la gestión de pacientes y auxiliares de enfermería con una app clínica intuitiva, ideal para hospitales y turnos diarios.">
+    <meta name="author" content="Diego Ortiz - Developer">
+    <meta name="robots" content="index, follow">
+    <meta name="keywords" content="gestión de pacientes, enfermería, hospital, auxiliares de enfermería, app clínica, turnos hospitalarios">
     <link rel="icon" href="https://www.meintegral.com/wp-content/uploads/2024/03/cropped-faviconmeintegral-1-32x32.png" sizes="32x32">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -19,87 +23,88 @@
                     <h1>Asignación de Pacientes</h1>
                     <p>Sistema de distribución equitativa para el turno diario</p>
                 </div>
-                <img src="./img/logo_meintegral.png" alt="">
+                <img src="./img/logo_meintegral.png" alt="Logo de la clinica Meintegral">
             </div>
             
             
         </header>
+        <main>
+            <!-- FORMULARIO DE PACIENTES -->
+            <div class="card">
+                <h2 class="card-title">Gestión de Pacientes</h2>
+                <form id="patientForm">
+                    <div class="form-group">
+                        <label for="patientName" class="form-label">Nombre del Paciente</label>
+                        <input 
+                            type="text" 
+                            id="patientName" 
+                            class="form-input" 
+                            placeholder="Ej: Juan Pérez"
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        ➕ Agregar Paciente
+                    </button>
+                </form>
 
-        <!-- FORMULARIO DE PACIENTES -->
-        <div class="card">
-            <h2 class="card-title">Gestión de Pacientes</h2>
-            <form id="patientForm">
-                <div class="form-group">
-                    <label for="patientName" class="form-label">Nombre del Paciente</label>
-                    <input 
-                        type="text" 
-                        id="patientName" 
-                        class="form-input" 
-                        placeholder="Ej: Juan Pérez"
-                        required
-                    >
+                <div class="mt-1">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
+                            Lista de Pacientes 
+                            <span class="badge badge-primary" id="patientCount">0</span>
+                        </h3>
+                    </div>
+                    <ul id="patientList" class="list"></ul>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    ➕ Agregar Paciente
+            </div>
+
+            <!-- FORMULARIO DE AUXILIARES -->
+            <div class="card">
+                <h2 class="card-title">Gestión de Auxiliares</h2>
+                <form id="auxiliaryForm">
+                    <div class="form-group">
+                        <label for="auxiliaryName" class="form-label">Nombre del Auxiliar</label>
+                        <input 
+                            type="text" 
+                            id="auxiliaryName" 
+                            class="form-input" 
+                            placeholder="Ej: María González"
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        ➕ Agregar Auxiliar
+                    </button>
+                </form>
+
+                <div class="mt-1">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
+                            Auxiliares del Turno 
+                            <span class="badge badge-success" id="auxiliaryCount">0</span>
+                        </h3>
+                    </div>
+                    <ul id="auxiliaryList" class="list"></ul>
+                </div>
+            </div>
+
+            <!-- BOTÓN DE ASIGNACIÓN -->
+            <div class="card">
+                <button id="assignBtn" class="btn btn-success" style="font-size: 18px;">
+                    🔄 Asignar Pacientes Equitativamente
                 </button>
-            </form>
-
-            <div class="mt-1">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
-                    <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
-                        Lista de Pacientes 
-                        <span class="badge badge-primary" id="patientCount">0</span>
-                    </h3>
+                <div id="assignmentInfo" class="alert alert-info mt-1 hidden">
+                    Se distribuirán los pacientes de forma equitativa entre los auxiliares disponibles.
                 </div>
-                <ul id="patientList" class="list"></ul>
             </div>
-        </div>
 
-        <!-- FORMULARIO DE AUXILIARES -->
-        <div class="card">
-            <h2 class="card-title">Gestión de Auxiliares</h2>
-            <form id="auxiliaryForm">
-                <div class="form-group">
-                    <label for="auxiliaryName" class="form-label">Nombre del Auxiliar</label>
-                    <input 
-                        type="text" 
-                        id="auxiliaryName" 
-                        class="form-input" 
-                        placeholder="Ej: María González"
-                        required
-                    >
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    ➕ Agregar Auxiliar
-                </button>
-            </form>
-
-            <div class="mt-1">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
-                    <h3 style="font-size: 16px; font-weight: 700; color: var(--dark);">
-                        Auxiliares del Turno 
-                        <span class="badge badge-success" id="auxiliaryCount">0</span>
-                    </h3>
-                </div>
-                <ul id="auxiliaryList" class="list"></ul>
+            <!-- RESULTADO DE ASIGNACIONES -->
+            <div id="assignmentsSection" class="card hidden">
+                <h2 class="card-title">📋 Asignaciones del Turno</h2>
+                <div id="assignmentsList"></div>
             </div>
-        </div>
-
-        <!-- BOTÓN DE ASIGNACIÓN -->
-        <div class="card">
-            <button id="assignBtn" class="btn btn-success" style="font-size: 18px;">
-                🔄 Asignar Pacientes Equitativamente
-            </button>
-            <div id="assignmentInfo" class="alert alert-info mt-1 hidden">
-                Se distribuirán los pacientes de forma equitativa entre los auxiliares disponibles.
-            </div>
-        </div>
-
-        <!-- RESULTADO DE ASIGNACIONES -->
-        <div id="assignmentsSection" class="card hidden">
-            <h2 class="card-title">📋 Asignaciones del Turno</h2>
-            <div id="assignmentsList"></div>
-        </div>
+        </main>
     </div>
 
     <footer class="footer">App creada por Diego Ortiz - Developer &copy; 2025</footer>
