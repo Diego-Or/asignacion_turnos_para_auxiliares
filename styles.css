@@ -19,8 +19,8 @@
     --gray: #6b7280;
     --light-gray: #f3f4f6;
     --white: #ffffff;
-    --danger: #dc2626;
-    --warning: #f59e0b;
+    --danger: rgba(219, 49, 40, 0.753);
+    --warning: #C5D111;
 }
 
 /* ===== ESTILOS GENERALES ===== */
@@ -184,7 +184,7 @@ body {
 }
 
 .btn-danger:hover {
-    background: #b91c1c;
+    background: #a71a1a;
 }
 
 .btn-edit {
@@ -195,7 +195,7 @@ body {
 }
 
 .btn-edit:hover {
-    background: #d97706;
+    background: #9ea80f;
 }
 
 .btn-secondary {
@@ -343,6 +343,14 @@ body {
 .badge-success {
     background: var(--light-green);
     color: var(--primary-green);
+}
+
+/* ===== Footer ===== */
+.footer{
+    color: var(--gray);
+    font-size: .8rem;
+    text-align: center;
+    display: block;
 }
 
 /* ===== RESPONSIVE ===== */
