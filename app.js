@@ -3,7 +3,7 @@
    ======================================== */
 
 // ===== ESTADO DE LA APLICACIÓN =====
-let patients = [];
+let patients = []; // Array de objetos: {name, bedNumber, category}
 let auxiliaries = [];
 let assignments = {};
 let editingPatient = null;
@@ -12,6 +12,8 @@ let editingAuxiliary = null;
 // ===== ELEMENTOS DEL DOM =====
 const patientForm = document.getElementById('patientForm');
 const patientNameInput = document.getElementById('patientName');
+const bedNumberInput = document.getElementById('bedNumber');
+const patientCategoryInput = document.getElementById('patientCategory');
 const patientList = document.getElementById('patientList');
 const patientCount = document.getElementById('patientCount');
 
@@ -25,18 +27,24 @@ const assignmentInfo = document.getElementById('assignmentInfo');
 const assignmentsSection = document.getElementById('assignmentsSection');
 const assignmentsList = document.getElementById('assignmentsList');
 
+// ===== CONSTANTES =====
+const CATEGORY_WEIGHTS = {
+    'Intensivo': 3,
+    'Intermedio': 1,
+    'Hospitalización': 1
+};
+
+const MAX_PATIENTS_PER_AUXILIARY = 4;
+
 // ===== INICIALIZACIÓN =====
 function init() {
     loadFromStorage();
     renderPatients();
     renderAuxiliaries();
     updateAssignButton();
-    // Las asignaciones NO se renderizan al cargar la página
-    // El usuario debe presionar el botón "Asignar" para verlas
 }
 
 // ===== ALMACENAMIENTO LOCAL =====
-// Solo guardamos pacientes y auxiliares, NO las asignaciones
 function saveToStorage() {
     const data = {
         patients,
@@ -51,7 +59,6 @@ function loadFromStorage() {
         const data = JSON.parse(stored);
         patients = data.patients || [];
         auxiliaries = data.auxiliaries || [];
-        // Las asignaciones NO se cargan, siempre empiezan vacías
         assignments = {};
     }
 }
@@ -60,59 +67,63 @@ function loadFromStorage() {
 patientForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = patientNameInput.value.trim();
+    const bedNumber = parseInt(bedNumberInput.value);
+    const category = patientCategoryInput.value;
 
-    if (!name) {
-        alert('⚠️ Por favor ingrese un nombre válido');
+    if (!name || !bedNumber) {
+        alert('⚠️ Por favor complete todos los campos');
         return;
     }
 
     if (editingPatient !== null) {
         // Modo edición
-        const oldName = patients[editingPatient];
-        if (isDuplicatePatient(name) && name !== oldName) {
-            alert('⚠️ Este paciente ya existe en la lista');
+        const oldPatient = patients[editingPatient];
+        if (isDuplicateBed(bedNumber) && bedNumber !== oldPatient.bedNumber) {
+            alert('⚠️ Ya existe un paciente en la cama ' + bedNumber);
             return;
         }
-        patients[editingPatient] = name;
+        patients[editingPatient] = { name, bedNumber, category };
         editingPatient = null;
         patientForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Paciente';
     } else {
         // Modo agregar
-        if (isDuplicatePatient(name)) {
-            alert('⚠️ Este paciente ya existe en la lista');
+        if (isDuplicateBed(bedNumber)) {
+            alert('⚠️ Ya existe un paciente en la cama ' + bedNumber);
             return;
         }
-        patients.push(name);
+        patients.push({ name, bedNumber, category });
     }
 
     patientNameInput.value = '';
+    bedNumberInput.value = '';
+    patientCategoryInput.value = 'Hospitalización';
     saveToStorage();
     renderPatients();
     updateAssignButton();
-    
-    // Limpiar asignaciones al modificar pacientes
     clearAssignments();
 });
 
-function isDuplicatePatient(name) {
-    return patients.some(p => p.toLowerCase() === name.toLowerCase());
+function isDuplicateBed(bedNumber) {
+    return patients.some(p => p.bedNumber === bedNumber);
 }
 
 function editPatient(index) {
     editingPatient = index;
-    patientNameInput.value = patients[index];
+    const patient = patients[index];
+    patientNameInput.value = patient.name;
+    bedNumberInput.value = patient.bedNumber;
+    patientCategoryInput.value = patient.category;
     patientNameInput.focus();
     patientForm.querySelector('button[type="submit"]').textContent = '✏️ Actualizar Paciente';
 }
 
 function deletePatient(index) {
-    if (confirm(`¿Está seguro de eliminar al paciente "${patients[index]}"?`)) {
+    const patient = patients[index];
+    if (confirm(`¿Está seguro de eliminar al paciente "${patient.name}" (Cama ${patient.bedNumber})?`)) {
         patients.splice(index, 1);
         saveToStorage();
         renderPatients();
         updateAssignButton();
-        
-        // Limpiar asignaciones al eliminar pacientes
         clearAssignments();
     }
 }
@@ -130,15 +141,28 @@ function renderPatients() {
         return;
     }
 
-    patientList.innerHTML = patients.map((patient, index) => `
-        <li class="list-item fade-in">
-            <span class="list-item-name">${patient}</span>
-            <div class="list-item-actions">
-                <button class="btn btn-edit" onclick="editPatient(${index})">✏️</button>
-                <button class="btn btn-danger" onclick="deletePatient(${index})">🗑️</button>
-            </div>
-        </li>
-    `).join('');
+    // Ordenar pacientes por número de cama
+    const sortedPatients = [...patients].sort((a, b) => a.bedNumber - b.bedNumber);
+
+    patientList.innerHTML = sortedPatients.map((patient) => {
+        const index = patients.indexOf(patient);
+        const categoryClass = patient.category.toLowerCase().replace('ó', 'o').replace('í', 'i');
+        return `
+            <li class="list-item fade-in">
+                <div class="list-item-content">
+                    <span class="list-item-name">${patient.name}</span>
+                    <div class="list-item-details">
+                        <span class="bed-number">🛏️ Cama ${patient.bedNumber}</span>
+                        <span class="category-badge category-${categoryClass}">${patient.category}</span>
+                    </div>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-edit" onclick="editPatient(${index})">✏️</button>
+                    <button class="btn btn-danger" onclick="deletePatient(${index})">🗑️</button>
+                </div>
+            </li>
+        `;
+    }).join('');
 }
 
 // ===== GESTIÓN DE AUXILIARES =====
@@ -152,7 +176,6 @@ auxiliaryForm.addEventListener('submit', (e) => {
     }
 
     if (editingAuxiliary !== null) {
-        // Modo edición
         const oldName = auxiliaries[editingAuxiliary];
         if (isDuplicateAuxiliary(name) && name !== oldName) {
             alert('⚠️ Este auxiliar ya existe en la lista');
@@ -162,7 +185,6 @@ auxiliaryForm.addEventListener('submit', (e) => {
         editingAuxiliary = null;
         auxiliaryForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Auxiliar';
     } else {
-        // Modo agregar
         if (isDuplicateAuxiliary(name)) {
             alert('⚠️ Este auxiliar ya existe en la lista');
             return;
@@ -174,8 +196,6 @@ auxiliaryForm.addEventListener('submit', (e) => {
     saveToStorage();
     renderAuxiliaries();
     updateAssignButton();
-    
-    // Limpiar asignaciones al modificar auxiliares
     clearAssignments();
 });
 
@@ -196,8 +216,6 @@ function deleteAuxiliary(index) {
         saveToStorage();
         renderAuxiliaries();
         updateAssignButton();
-        
-        // Limpiar asignaciones al eliminar auxiliares
         clearAssignments();
     }
 }
@@ -255,22 +273,62 @@ assignBtn.addEventListener('click', () => {
 });
 
 function assignPatientsEquitably() {
-    // Resetear asignaciones
+    // Ordenar pacientes por número de cama (cercanía)
+    const sortedPatients = [...patients].sort((a, b) => a.bedNumber - b.bedNumber);
+    
+    // Inicializar asignaciones
     assignments = {};
+    const auxiliaryLoads = {}; // Tracking de carga equivalente de cada auxiliar
     auxiliaries.forEach(aux => {
         assignments[aux] = [];
+        auxiliaryLoads[aux] = 0;
     });
 
-    // Distribuir pacientes de forma equitativa
-    const shuffledPatients = [...patients].sort(() => Math.random() - 0.5);
+    // Asignar pacientes de forma secuencial y cercana
+    let currentAuxIndex = 0;
     
-    shuffledPatients.forEach((patient, index) => {
-        const auxIndex = index % auxiliaries.length;
-        const auxiliary = auxiliaries[auxIndex];
-        assignments[auxiliary].push(patient);
-    });
+    for (const patient of sortedPatients) {
+        const patientWeight = CATEGORY_WEIGHTS[patient.category];
+        let assigned = false;
+        
+        // Intentar asignar al auxiliar actual primero (mantener cercanía)
+        const currentAux = auxiliaries[currentAuxIndex];
+        
+        if (auxiliaryLoads[currentAux] + patientWeight <= MAX_PATIENTS_PER_AUXILIARY) {
+            // El auxiliar actual puede tomar este paciente
+            assignments[currentAux].push(patient);
+            auxiliaryLoads[currentAux] += patientWeight;
+            assigned = true;
+        } else {
+            // El auxiliar actual está lleno, buscar el siguiente disponible
+            let attempts = 0;
+            let nextAuxIndex = (currentAuxIndex + 1) % auxiliaries.length;
+            
+            while (!assigned && attempts < auxiliaries.length) {
+                const nextAux = auxiliaries[nextAuxIndex];
+                
+                if (auxiliaryLoads[nextAux] + patientWeight <= MAX_PATIENTS_PER_AUXILIARY) {
+                    assignments[nextAux].push(patient);
+                    auxiliaryLoads[nextAux] += patientWeight;
+                    currentAuxIndex = nextAuxIndex; // Cambiar al nuevo auxiliar
+                    assigned = true;
+                } else {
+                    nextAuxIndex = (nextAuxIndex + 1) % auxiliaries.length;
+                    attempts++;
+                }
+            }
+            
+            // Si ningún auxiliar tiene capacidad exacta, asignar al que tenga menos carga
+            if (!assigned) {
+                const leastLoadedAux = Object.keys(auxiliaryLoads).reduce((a, b) => 
+                    auxiliaryLoads[a] < auxiliaryLoads[b] ? a : b
+                );
+                assignments[leastLoadedAux].push(patient);
+                auxiliaryLoads[leastLoadedAux] += patientWeight;
+            }
+        }
+    }
 
-    // NO guardamos las asignaciones en localStorage
     renderAssignments();
     
     // Scroll suave hacia las asignaciones
@@ -284,29 +342,45 @@ function renderAssignments() {
 
     const totalPatients = patients.length;
     const totalAuxiliaries = auxiliaries.length;
-    const avgPatients = Math.floor(totalPatients / totalAuxiliaries);
 
     let html = `
         <div class="alert alert-info mb-2">
             ✅ Se han asignado <strong>${totalPatients} pacientes</strong> entre 
-            <strong>${totalAuxiliaries} auxiliares</strong>
-            (${avgPatients}-${avgPatients + 1} pacientes por auxiliar)
+            <strong>${totalAuxiliaries} auxiliares</strong> considerando proximidad y carga de trabajo
         </div>
     `;
 
     auxiliaries.forEach(auxiliary => {
         const assignedPatients = assignments[auxiliary] || [];
+        
+        // Calcular carga equivalente
+        let equivalentLoad = 0;
+        assignedPatients.forEach(patient => {
+            equivalentLoad += CATEGORY_WEIGHTS[patient.category];
+        });
+
         html += `
             <div class="assignment-card fade-in">
                 <div class="assignment-header">
                     <span class="assignment-auxiliary">👨‍⚕️ ${auxiliary}</span>
-                    <span class="assignment-count">${assignedPatients.length}</span>
+                    <span class="assignment-count">${assignedPatients.length} pacientes (${equivalentLoad}/${MAX_PATIENTS_PER_AUXILIARY})</span>
                 </div>
                 ${assignedPatients.length > 0 ? `
                     <ul class="assignment-patients">
-                        ${assignedPatients.map(patient => `
-                            <li class="assignment-patient">🏥 ${patient}</li>
-                        `).join('')}
+                        ${assignedPatients.map(patient => {
+                            const categoryClass = patient.category.toLowerCase().replace('ó', 'o').replace('í', 'i');
+                            return `
+                                <li class="assignment-patient">
+                                    <div class="assignment-patient-info">
+                                        <div class="assignment-patient-name">🏥 ${patient.name}</div>
+                                        <div class="assignment-patient-details">
+                                            <span class="bed-number">🛏️ Cama ${patient.bedNumber}</span>
+                                            <span class="category-badge category-${categoryClass}">${patient.category}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            `;
+                        }).join('')}
                     </ul>
                 ` : `
                     <div class="empty-state" style="padding: 20px;">
@@ -321,7 +395,6 @@ function renderAssignments() {
 }
 
 // ===== UTILIDADES =====
-// Función para limpiar las asignaciones de la vista
 function clearAssignments() {
     if (Object.keys(assignments).length > 0) {
         assignmentsSection.classList.add('hidden');
