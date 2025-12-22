@@ -43,6 +43,28 @@
                             required
                         >
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="bedNumber" class="form-label">Número de Cama</label>
+                        <input 
+                            type="number" 
+                            id="bedNumber" 
+                            class="form-input" 
+                            placeholder="Ej: 101"
+                            min="1"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patientCategory" class="form-label">Categoría del Paciente</label>
+                        <select id="patientCategory" class="form-input">
+                            <option value="Hospitalización">Hospitalización (1 paciente)</option>
+                            <option value="Intermedio">Intermedio (1 paciente)</option>
+                            <option value="Intensivo">Intensivo (3 pacientes)</option>
+                        </select>
+                    </div>
+                    
                     <button type="submit" class="btn btn-primary">
                         ➕ Agregar Paciente
                     </button>
