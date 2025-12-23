@@ -34,17 +34,6 @@
                 <h2 class="card-title">Gestión de Pacientes</h2>
                 <form id="patientForm">
                     <div class="form-group">
-                        <label for="patientName" class="form-label">Nombre del Paciente</label>
-                        <input 
-                            type="text" 
-                            id="patientName" 
-                            class="form-input" 
-                            placeholder="Ej: Juan Pérez"
-                            required
-                        >
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="bedNumber" class="form-label">Número de Cama</label>
                         <input 
                             type="number" 
@@ -59,9 +48,9 @@
                     <div class="form-group">
                         <label for="patientCategory" class="form-label">Categoría del Paciente</label>
                         <select id="patientCategory" class="form-input">
-                            <option value="Hospitalización">Hospitalización (1 paciente)</option>
-                            <option value="Intermedio">Intermedio (1 paciente)</option>
-                            <option value="Intensivo">Intensivo (3 pacientes)</option>
+                            <option value="Hospitalización">Hospitalización</option>
+                            <option value="Intermedio">Intermedio</option>
+                            <option value="Intensivo">Intensivo</option>
                         </select>
                     </div>
                     
@@ -113,9 +102,14 @@
 
             <!-- BOTÓN DE ASIGNACIÓN -->
             <div class="card">
-                <button id="assignBtn" class="btn btn-success" style="font-size: 18px;">
-                    🔄 Asignar Pacientes Equitativamente
-                </button>
+                <div style="display: flex; gap: 12px; flex-direction: column;">
+                    <button id="assignBtn" class="btn btn-success" style="font-size: 18px;">
+                        🔄 Asignar Pacientes Equitativamente
+                    </button>
+                    <button id="clearAllBtn" class="btn btn-danger" style="font-size: 16px;">
+                        🗑️ Limpiar Todos los Datos
+                    </button>
+                </div>
                 <div id="assignmentInfo" class="alert alert-info mt-1 hidden">
                     Se distribuirán los pacientes de forma equitativa entre los auxiliares disponibles.
                 </div>

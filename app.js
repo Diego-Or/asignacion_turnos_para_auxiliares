@@ -3,7 +3,7 @@
    ======================================== */
 
 // ===== ESTADO DE LA APLICACIÓN =====
-let patients = []; // Array de objetos: {name, bedNumber, category}
+let patients = []; // Array de objetos: {bedNumber, category}
 let auxiliaries = [];
 let assignments = {};
 let editingPatient = null;
@@ -11,7 +11,6 @@ let editingAuxiliary = null;
 
 // ===== ELEMENTOS DEL DOM =====
 const patientForm = document.getElementById('patientForm');
-const patientNameInput = document.getElementById('patientName');
 const bedNumberInput = document.getElementById('bedNumber');
 const patientCategoryInput = document.getElementById('patientCategory');
 const patientList = document.getElementById('patientList');
@@ -23,6 +22,7 @@ const auxiliaryList = document.getElementById('auxiliaryList');
 const auxiliaryCount = document.getElementById('auxiliaryCount');
 
 const assignBtn = document.getElementById('assignBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
 const assignmentInfo = document.getElementById('assignmentInfo');
 const assignmentsSection = document.getElementById('assignmentsSection');
 const assignmentsList = document.getElementById('assignmentsList');
@@ -66,12 +66,11 @@ function loadFromStorage() {
 // ===== GESTIÓN DE PACIENTES =====
 patientForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = patientNameInput.value.trim();
     const bedNumber = parseInt(bedNumberInput.value);
     const category = patientCategoryInput.value;
 
-    if (!name || !bedNumber) {
-        alert('⚠️ Por favor complete todos los campos');
+    if (!bedNumber) {
+        alert('⚠️ Por favor ingrese un número de cama válido');
         return;
     }
 
@@ -82,7 +81,7 @@ patientForm.addEventListener('submit', (e) => {
             alert('⚠️ Ya existe un paciente en la cama ' + bedNumber);
             return;
         }
-        patients[editingPatient] = { name, bedNumber, category };
+        patients[editingPatient] = { bedNumber, category };
         editingPatient = null;
         patientForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Paciente';
     } else {
@@ -91,10 +90,9 @@ patientForm.addEventListener('submit', (e) => {
             alert('⚠️ Ya existe un paciente en la cama ' + bedNumber);
             return;
         }
-        patients.push({ name, bedNumber, category });
+        patients.push({ bedNumber, category });
     }
 
-    patientNameInput.value = '';
     bedNumberInput.value = '';
     patientCategoryInput.value = 'Hospitalización';
     saveToStorage();
@@ -110,16 +108,15 @@ function isDuplicateBed(bedNumber) {
 function editPatient(index) {
     editingPatient = index;
     const patient = patients[index];
-    patientNameInput.value = patient.name;
     bedNumberInput.value = patient.bedNumber;
     patientCategoryInput.value = patient.category;
-    patientNameInput.focus();
+    bedNumberInput.focus();
     patientForm.querySelector('button[type="submit"]').textContent = '✏️ Actualizar Paciente';
 }
 
 function deletePatient(index) {
     const patient = patients[index];
-    if (confirm(`¿Está seguro de eliminar al paciente "${patient.name}" (Cama ${patient.bedNumber})?`)) {
+    if (confirm(`¿Está seguro de eliminar al paciente de la Cama ${patient.bedNumber}?`)) {
         patients.splice(index, 1);
         saveToStorage();
         renderPatients();
@@ -150,9 +147,8 @@ function renderPatients() {
         return `
             <li class="list-item fade-in">
                 <div class="list-item-content">
-                    <span class="list-item-name">${patient.name}</span>
+                    <span class="list-item-name">Cama ${patient.bedNumber}</span>
                     <div class="list-item-details">
-                        <span class="bed-number">🛏️ Cama ${patient.bedNumber}</span>
                         <span class="category-badge category-${categoryClass}">${patient.category}</span>
                     </div>
                 </div>
@@ -272,9 +268,55 @@ assignBtn.addEventListener('click', () => {
     assignPatientsEquitably();
 });
 
+// Botón para limpiar todos los datos
+clearAllBtn.addEventListener('click', () => {
+    if (confirm('⚠️ ¿Está seguro de eliminar TODOS los pacientes y auxiliares?\n\nEsta acción no se puede deshacer.')) {
+        // Limpiar arrays
+        patients = [];
+        auxiliaries = [];
+        assignments = {};
+        
+        // Limpiar localStorage
+        localStorage.removeItem('hospitalAssignments');
+        
+        // Reiniciar estados de edición
+        editingPatient = null;
+        editingAuxiliary = null;
+        
+        // Limpiar formularios
+        bedNumberInput.value = '';
+        patientCategoryInput.value = 'Hospitalización';
+        auxiliaryNameInput.value = '';
+        
+        // Actualizar texto de botones de formulario
+        patientForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Paciente';
+        auxiliaryForm.querySelector('button[type="submit"]').textContent = '➕ Agregar Auxiliar';
+        
+        // Renderizar vistas vacías
+        renderPatients();
+        renderAuxiliaries();
+        updateAssignButton();
+        clearAssignments();
+        
+        alert('✅ Todos los datos han sido eliminados correctamente');
+    }
+});
+
 function assignPatientsEquitably() {
     // Ordenar pacientes por número de cama (cercanía)
     const sortedPatients = [...patients].sort((a, b) => a.bedNumber - b.bedNumber);
+    
+    // NUEVA LÓGICA: Introducir variabilidad manteniendo cercanía
+    // Agrupar pacientes en bloques cercanos y mezclar dentro de cada bloque
+    const blockSize = 3; // Tamaño del bloque de camas cercanas
+    const shuffledPatients = [];
+    
+    for (let i = 0; i < sortedPatients.length; i += blockSize) {
+        const block = sortedPatients.slice(i, i + blockSize);
+        // Mezclar aleatoriamente dentro del bloque para variar la asignación
+        const shuffledBlock = block.sort(() => Math.random() - 0.5);
+        shuffledPatients.push(...shuffledBlock);
+    }
     
     // Inicializar asignaciones
     assignments = {};
@@ -284,47 +326,84 @@ function assignPatientsEquitably() {
         auxiliaryLoads[aux] = 0;
     });
 
-    // Asignar pacientes de forma secuencial y cercana
-    let currentAuxIndex = 0;
+    // NUEVA LÓGICA: Comenzar desde un auxiliar aleatorio cada vez
+    let currentAuxIndex = Math.floor(Math.random() * auxiliaries.length);
     
-    for (const patient of sortedPatients) {
+    for (const patient of shuffledPatients) {
         const patientWeight = CATEGORY_WEIGHTS[patient.category];
         let assigned = false;
         
         // Intentar asignar al auxiliar actual primero (mantener cercanía)
         const currentAux = auxiliaries[currentAuxIndex];
         
+        // Verificar si puede asignarse sin exceder demasiado el límite
+        // Permitimos exceder solo si es necesario (paciente intensivo o última opción)
         if (auxiliaryLoads[currentAux] + patientWeight <= MAX_PATIENTS_PER_AUXILIARY) {
-            // El auxiliar actual puede tomar este paciente
+            // Asignación normal dentro del límite
             assignments[currentAux].push(patient);
             auxiliaryLoads[currentAux] += patientWeight;
             assigned = true;
-        } else {
-            // El auxiliar actual está lleno, buscar el siguiente disponible
-            let attempts = 0;
-            let nextAuxIndex = (currentAuxIndex + 1) % auxiliaries.length;
+        } else if (auxiliaryLoads[currentAux] < MAX_PATIENTS_PER_AUXILIARY) {
+            // El auxiliar tiene algo de espacio pero no suficiente para este paciente
+            // Intentar buscar otro auxiliar con más capacidad
+            let foundBetter = false;
+            let bestAuxIndex = -1;
+            let bestRemainingCapacity = -1;
             
+            // Buscar el auxiliar con más capacidad disponible
+            for (let i = 0; i < auxiliaries.length; i++) {
+                const auxIndex = (currentAuxIndex + i) % auxiliaries.length;
+                const aux = auxiliaries[auxIndex];
+                const remainingCapacity = MAX_PATIENTS_PER_AUXILIARY - auxiliaryLoads[aux];
+                
+                if (auxiliaryLoads[aux] + patientWeight <= MAX_PATIENTS_PER_AUXILIARY && remainingCapacity > bestRemainingCapacity) {
+                    bestAuxIndex = auxIndex;
+                    bestRemainingCapacity = remainingCapacity;
+                    foundBetter = true;
+                }
+            }
+            
+            if (foundBetter) {
+                // Asignar al mejor auxiliar encontrado
+                const bestAux = auxiliaries[bestAuxIndex];
+                assignments[bestAux].push(patient);
+                auxiliaryLoads[bestAux] += patientWeight;
+                currentAuxIndex = bestAuxIndex;
+                assigned = true;
+            } else {
+                // Nadie tiene capacidad, asignar al actual y cambiar de auxiliar
+                assignments[currentAux].push(patient);
+                auxiliaryLoads[currentAux] += patientWeight;
+                currentAuxIndex = (currentAuxIndex + 1) % auxiliaries.length;
+                assigned = true;
+            }
+        } else {
+            // El auxiliar actual ya está en o sobre el límite, cambiar al siguiente
+            currentAuxIndex = (currentAuxIndex + 1) % auxiliaries.length;
+            
+            // Buscar auxiliar con capacidad
+            let attempts = 0;
             while (!assigned && attempts < auxiliaries.length) {
-                const nextAux = auxiliaries[nextAuxIndex];
+                const nextAux = auxiliaries[currentAuxIndex];
                 
                 if (auxiliaryLoads[nextAux] + patientWeight <= MAX_PATIENTS_PER_AUXILIARY) {
                     assignments[nextAux].push(patient);
                     auxiliaryLoads[nextAux] += patientWeight;
-                    currentAuxIndex = nextAuxIndex; // Cambiar al nuevo auxiliar
                     assigned = true;
                 } else {
-                    nextAuxIndex = (nextAuxIndex + 1) % auxiliaries.length;
+                    currentAuxIndex = (currentAuxIndex + 1) % auxiliaries.length;
                     attempts++;
                 }
             }
             
-            // Si ningún auxiliar tiene capacidad exacta, asignar al que tenga menos carga
+            // Si ninguno tiene capacidad, asignar al que tenga menos carga
             if (!assigned) {
                 const leastLoadedAux = Object.keys(auxiliaryLoads).reduce((a, b) => 
                     auxiliaryLoads[a] < auxiliaryLoads[b] ? a : b
                 );
                 assignments[leastLoadedAux].push(patient);
                 auxiliaryLoads[leastLoadedAux] += patientWeight;
+                assigned = true;
             }
         }
     }
@@ -372,9 +451,8 @@ function renderAssignments() {
                             return `
                                 <li class="assignment-patient">
                                     <div class="assignment-patient-info">
-                                        <div class="assignment-patient-name">🏥 ${patient.name}</div>
+                                        <div class="assignment-patient-name">🛏️ Cama ${patient.bedNumber}</div>
                                         <div class="assignment-patient-details">
-                                            <span class="bed-number">🛏️ Cama ${patient.bedNumber}</span>
                                             <span class="category-badge category-${categoryClass}">${patient.category}</span>
                                         </div>
                                     </div>
